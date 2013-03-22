@@ -1,28 +1,31 @@
 package main
 
 import (
+	"log"
 	"path/filepath"
 	"os"
 	"flag"
 	"fmt"
 )
 
-func visit(path string, f os.FileInfo, err error) error {
-  fullpath, err := filepath.Abs(path)
-  if err != nil {
-	return nil
-  }
-  fmt.Printf("Visited: %s\n", fullpath)
-  return nil
-}
-
 // it's alive!
 func main() {
+	allPaths := []string{"abc", "def"}
+	var scan = func(path string, _ os.FileInfo, inpErr error) (err error) {
+		fullpath, err := filepath.Abs(path)
+		if err != nil {
+			return nil
+		}
+		allPaths = append(allPaths, fullpath)
+		return nil
+	}
 	flag.Parse()
 	root := flag.Arg(0)
-	err := filepath.Walk(root, visit)
+	err := filepath.Walk(root, scan)
 	if err != nil {
-		fmt.Printf("filepath.Walk() returned %v\n", err)
+		log.Fatal("Error walking directory")
+	}
+	for _, path := range allPaths {
+		fmt.Printf("Scanned %s\n", path)
 	}
 }
-
