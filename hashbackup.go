@@ -11,13 +11,15 @@ import (
 // returns a slice of file paths the user is interested in. root is the top
 // level directory to search under
 func getPathsOfInterest(root string) (allPaths []string, err error) {
-	var scan = func(path string, _ os.FileInfo, inpErr error) (err error) {
-		fullpath, err := filepath.Abs(path)
-		if err != nil {
-			return
+	var scan = func(path string, info os.FileInfo, _ error) error {
+		if !info.IsDir() {
+			fullpath, err := filepath.Abs(path)
+			if err != nil {
+				return err
+			}
+			allPaths = append(allPaths, fullpath)
 		}
-		allPaths = append(allPaths, fullpath)
-		return
+		return nil
 	}
 	err = filepath.Walk(root, scan)
 	return
