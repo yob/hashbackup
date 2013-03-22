@@ -1,16 +1,16 @@
 package main
 
 import (
-	"log"
 	"path/filepath"
 	"os"
 	"flag"
 	"fmt"
 )
 
-// it's alive!
-func main() {
-	allPaths := []string{"abc", "def"}
+// returns a slice of file paths the user is interested in. root is the top
+// level directory to search under
+func getPathsOfInterest(root string) []string {
+	allPaths := []string{}
 	var scan = func(path string, _ os.FileInfo, inpErr error) (err error) {
 		fullpath, err := filepath.Abs(path)
 		if err != nil {
@@ -19,12 +19,14 @@ func main() {
 		allPaths = append(allPaths, fullpath)
 		return nil
 	}
+	filepath.Walk(root, scan)
+	return allPaths
+}
+
+// it's alive!
+func main() {
 	flag.Parse()
-	root := flag.Arg(0)
-	err := filepath.Walk(root, scan)
-	if err != nil {
-		log.Fatal("Error walking directory")
-	}
+	allPaths := getPathsOfInterest(flag.Arg(0))
 	for _, path := range allPaths {
 		fmt.Printf("Scanned %s\n", path)
 	}
