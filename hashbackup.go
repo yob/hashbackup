@@ -3,6 +3,7 @@ package main
 import (
 	"io"
 	"log"
+	"hash"
 	"crypto/md5"
 	"crypto/sha1"
 	"path/filepath"
@@ -50,32 +51,20 @@ func loadAllInfo(allPaths []string) (results []fileInfo) {
 	return results
 }
 
-func genMd5(path string) string {
+func genHash(hash hash.Hash, path string) string {
 	file, err := os.Open(path)
 	if err != nil {
 		return path
 	}
-	h := md5.New()
-	io.Copy(h, file)
+	io.Copy(hash, file)
 	file.Close()
-	return fmt.Sprintf("%x", h.Sum(nil))
-}
-
-func genSha1(path string) string {
-	file, err := os.Open(path)
-	if err != nil {
-		return path
-	}
-	h := sha1.New()
-	io.Copy(h, file)
-	file.Close()
-	return fmt.Sprintf("%x", h.Sum(nil))
+	return fmt.Sprintf("%x", hash.Sum(nil))
 }
 
 func loadInfo(path string) (info fileInfo) {
 	info.path = path
-	info.md5  = genMd5(path)
-	info.sha1 = genSha1(path)
+	info.md5  = genHash(md5.New(), path)
+	info.sha1 = genHash(sha1.New(), path)
 	return
 }
 
