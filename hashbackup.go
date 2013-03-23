@@ -95,6 +95,6 @@ func main() {
 	}
 	results := calculateAllHashes(allData)
 	for _, data := range results {
-		fmt.Printf("%s %s %d %s\n", data.md5, data.sha1, data.bytes, data.path)
+		fmt.Printf("%s\t%s\t%d\t%s\n", data.md5, data.sha1, data.bytes, data.path)
 	}
 }
