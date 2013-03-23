@@ -4,6 +4,7 @@ import (
 	"io"
 	"log"
 	"crypto/md5"
+	"crypto/sha1"
 	"path/filepath"
 	"os"
 	"flag"
@@ -60,9 +61,21 @@ func genMd5(path string) string {
 	return fmt.Sprintf("%x", h.Sum(nil))
 }
 
+func genSha1(path string) string {
+	file, err := os.Open(path)
+	if err != nil {
+		return path
+	}
+	h := sha1.New()
+	io.Copy(h, file)
+	file.Close()
+	return fmt.Sprintf("%x", h.Sum(nil))
+}
+
 func loadInfo(path string) (info fileInfo) {
 	info.path = path
 	info.md5  = genMd5(path)
+	info.sha1 = genSha1(path)
 	return
 }
 
@@ -77,6 +90,6 @@ func main() {
 	}
 	results := loadAllInfo(allPaths)
 	for _, info := range results {
-		fmt.Printf("%s %s\n", info.md5, info.path)
+		fmt.Printf("%s %s %s\n", info.md5, info.sha1, info.path)
 	}
 }
