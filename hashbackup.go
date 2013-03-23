@@ -25,14 +25,34 @@ func getPathsOfInterest(root string) (allPaths []string, err error) {
 	return
 }
 
+func hashPaths(allPaths []string) (results []string) {
+	ch := make(chan string)
+	for _, path := range allPaths {
+		go func(path string) {
+			ch <- hashPath(path)
+		}(path)
+	}
+	for len(results) < len(allPaths) {
+		result := <-ch
+		results = append(results, result)
+	}
+	return results
+}
+
+func hashPath(path string) string {
+	return path + " md5"
+}
+
 // it's alive!
 func main() {
 	flag.Parse()
-	allPaths, err := getPathsOfInterest(flag.Arg(0))
+	root := flag.Arg(0)
+	allPaths, err := getPathsOfInterest(root)
 	if err != nil {
 		log.Fatal("Error walking directory")
 	}
-	for _, path := range allPaths {
-		fmt.Printf("Scanned %s\n", path)
+	results := hashPaths(allPaths)
+	for _, item := range results {
+		fmt.Printf("hash: %s\n", item)
 	}
 }
