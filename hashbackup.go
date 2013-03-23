@@ -1,7 +1,9 @@
 package main
 
 import (
+	"io"
 	"log"
+	"crypto/md5"
 	"path/filepath"
 	"os"
 	"flag"
@@ -40,7 +42,14 @@ func hashPaths(allPaths []string) (results []string) {
 }
 
 func hashPath(path string) string {
-	return path + " md5"
+	 file, err := os.Open(path)
+	 if err != nil {
+		return path
+	 }
+	 h := md5.New()
+	 io.Copy(h, file)
+	 file.Close()
+	return path + " " + fmt.Sprintf("%x", h.Sum(nil))
 }
 
 // it's alive!
