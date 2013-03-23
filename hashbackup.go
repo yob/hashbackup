@@ -11,6 +11,13 @@ import (
 	"runtime"
 )
 
+type fileInfo struct {
+	path  string
+	md5   string
+	sha1  string
+	bytes int
+}
+
 // returns a slice of file paths the user is interested in. root is the top
 // level directory to search under
 func getPathsOfInterest(root string) (allPaths []string, err error) {
@@ -28,11 +35,11 @@ func getPathsOfInterest(root string) (allPaths []string, err error) {
 	return
 }
 
-func hashPaths(allPaths []string) (results []string) {
-	ch := make(chan string)
+func loadAllInfo(allPaths []string) (results []fileInfo) {
+	ch := make(chan fileInfo)
 	for _, path := range allPaths {
 		go func(path string) {
-			ch <- hashPath(path)
+			ch <- loadInfo(path)
 		}(path)
 	}
 	for len(results) < len(allPaths) {
@@ -42,15 +49,21 @@ func hashPaths(allPaths []string) (results []string) {
 	return results
 }
 
-func hashPath(path string) string {
-	 file, err := os.Open(path)
-	 if err != nil {
+func genMd5(path string) string {
+	file, err := os.Open(path)
+	if err != nil {
 		return path
-	 }
-	 h := md5.New()
-	 io.Copy(h, file)
-	 file.Close()
-	return path + " " + fmt.Sprintf("%x", h.Sum(nil))
+	}
+	h := md5.New()
+	io.Copy(h, file)
+	file.Close()
+	return fmt.Sprintf("%x", h.Sum(nil))
+}
+
+func loadInfo(path string) (info fileInfo) {
+	info.path = path
+	info.md5  = genMd5(path)
+	return
 }
 
 // it's alive!
@@ -62,8 +75,8 @@ func main() {
 	if err != nil {
 		log.Fatal("Error walking directory")
 	}
-	results := hashPaths(allPaths)
-	for _, item := range results {
-		fmt.Printf("hash: %s\n", item)
+	results := loadAllInfo(allPaths)
+	for _, info := range results {
+		fmt.Printf("%s %s\n", info.md5, info.path)
 	}
 }
