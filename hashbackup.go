@@ -11,6 +11,7 @@ import (
 	"flag"
 	"fmt"
 	"runtime"
+	"sort"
 )
 
 type fileData struct {
@@ -20,9 +21,23 @@ type fileData struct {
 	bytes int64
 }
 
+type fileDataSlice []fileData
+
+func (s fileDataSlice) Less(i, j int) bool {
+	return s[i].path < s[j].path
+}
+
+func (s fileDataSlice) Len() int {
+	return len(s)
+}
+
+func (s fileDataSlice) Swap(i, j int) {
+	s[i], s[j] = s[j], s[i]
+}
+
 // returns a slice of file paths the user is interested in. root is the top
 // level directory to search under
-func getPathsOfInterest(root string) (allData []fileData, err error) {
+func getPathsOfInterest(root string) (allData fileDataSlice, err error) {
 	var scan = func(path string, info os.FileInfo, _ error) error {
 		if !info.IsDir() {
 			fullpath, err := filepath.Abs(path)
@@ -38,7 +53,7 @@ func getPathsOfInterest(root string) (allData []fileData, err error) {
 	return
 }
 
-func calculateAllHashes(allData []fileData) (results []fileData) {
+func calculateAllHashes(allData fileDataSlice) (results fileDataSlice) {
 	ch := make(chan fileData)
 	for _, path := range allData {
 		go func(data fileData) {
@@ -49,6 +64,7 @@ func calculateAllHashes(allData []fileData) (results []fileData) {
 		result := <-ch
 		results = append(results, result)
 	}
+	sort.Sort(results)
 	return results
 }
 
