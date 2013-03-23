@@ -13,23 +13,24 @@ import (
 	"runtime"
 )
 
-type fileInfo struct {
+type fileData struct {
 	path  string
 	md5   string
 	sha1  string
-	bytes int
+	bytes int64
 }
 
 // returns a slice of file paths the user is interested in. root is the top
 // level directory to search under
-func getPathsOfInterest(root string) (allPaths []string, err error) {
+func getPathsOfInterest(root string) (allData []fileData, err error) {
 	var scan = func(path string, info os.FileInfo, _ error) error {
 		if !info.IsDir() {
 			fullpath, err := filepath.Abs(path)
 			if err != nil {
 				return err
 			}
-			allPaths = append(allPaths, fullpath)
+			data := fileData{path: fullpath, bytes: info.Size()}
+			allData = append(allData, data)
 		}
 		return nil
 	}
@@ -37,14 +38,14 @@ func getPathsOfInterest(root string) (allPaths []string, err error) {
 	return
 }
 
-func loadAllInfo(allPaths []string) (results []fileInfo) {
-	ch := make(chan fileInfo)
-	for _, path := range allPaths {
-		go func(path string) {
-			ch <- loadInfo(path)
+func calculateAllHashes(allData []fileData) (results []fileData) {
+	ch := make(chan fileData)
+	for _, path := range allData {
+		go func(data fileData) {
+			ch <- calculateHashes(data)
 		}(path)
 	}
-	for len(results) < len(allPaths) {
+	for len(results) < len(allData) {
 		result := <-ch
 		results = append(results, result)
 	}
@@ -61,11 +62,10 @@ func genHash(hash hash.Hash, path string) string {
 	return fmt.Sprintf("%x", hash.Sum(nil))
 }
 
-func loadInfo(path string) (info fileInfo) {
-	info.path = path
-	info.md5  = genHash(md5.New(), path)
-	info.sha1 = genHash(sha1.New(), path)
-	return
+func calculateHashes(info fileData) (fileData) {
+	info.md5  = genHash(md5.New(), info.path)
+	info.sha1 = genHash(sha1.New(), info.path)
+	return info
 }
 
 // it's alive!
@@ -73,12 +73,12 @@ func main() {
 	runtime.GOMAXPROCS(runtime.NumCPU())
 	flag.Parse()
 	root := flag.Arg(0)
-	allPaths, err := getPathsOfInterest(root)
+	allData, err := getPathsOfInterest(root)
 	if err != nil {
 		log.Fatal("Error walking directory")
 	}
-	results := loadAllInfo(allPaths)
-	for _, info := range results {
-		fmt.Printf("%s %s %s\n", info.md5, info.sha1, info.path)
+	results := calculateAllHashes(allData)
+	for _, data := range results {
+		fmt.Printf("%s %s %d %s\n", data.md5, data.sha1, data.bytes, data.path)
 	}
 }
