@@ -8,6 +8,7 @@ import (
 	"os"
 	"flag"
 	"fmt"
+	"runtime"
 )
 
 // returns a slice of file paths the user is interested in. root is the top
@@ -54,6 +55,7 @@ func hashPath(path string) string {
 
 // it's alive!
 func main() {
+	runtime.GOMAXPROCS(runtime.NumCPU())
 	flag.Parse()
 	root := flag.Arg(0)
 	allPaths, err := getPathsOfInterest(root)
