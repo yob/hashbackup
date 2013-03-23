@@ -1,15 +1,15 @@
 package main
 
 import (
-	"io"
-	"log"
-	"hash"
 	"crypto/md5"
 	"crypto/sha1"
-	"path/filepath"
-	"os"
 	"flag"
 	"fmt"
+	"hash"
+	"io"
+	"log"
+	"os"
+	"path/filepath"
 	"runtime"
 	"sort"
 )
@@ -78,8 +78,8 @@ func genHash(hash hash.Hash, path string) string {
 	return fmt.Sprintf("%x", hash.Sum(nil))
 }
 
-func calculateHashes(info fileData) (fileData) {
-	info.md5  = genHash(md5.New(), info.path)
+func calculateHashes(info fileData) fileData {
+	info.md5 = genHash(md5.New(), info.path)
 	info.sha1 = genHash(sha1.New(), info.path)
 	return info
 }
