@@ -14,6 +14,7 @@ import (
 	"sort"
 )
 
+// a convenient place to hold data on a signle file
 type fileData struct {
 	path  string
 	md5   string
@@ -21,6 +22,8 @@ type fileData struct {
 	bytes int64
 }
 
+// a slice for holding a collection of fileData structs. Includes extra methods
+// required to match sort.Interface so the collection is sortable.
 type fileDataSlice []fileData
 
 func (s fileDataSlice) Less(i, j int) bool {
@@ -35,8 +38,9 @@ func (s fileDataSlice) Swap(i, j int) {
 	s[i], s[j] = s[j], s[i]
 }
 
-// returns a slice of file paths the user is interested in. root is the top
-// level directory to search under
+// returns a slice of fileData structs the user is interested in. The structs
+// have basic info (path, bytes) filled in but the hash fields are empty.
+// root is the top level directory to search under
 func getPathsOfInterest(root string) (allData fileDataSlice, err error) {
 	var scan = func(path string, info os.FileInfo, _ error) error {
 		if !info.IsDir() {
@@ -53,6 +57,9 @@ func getPathsOfInterest(root string) (allData fileDataSlice, err error) {
 	return
 }
 
+// takes a collection of fileData structs, fills in the hash fields and returns
+// a new slice with the complete data. Farms the work out to a go-routine per
+// file for maximum concurrency.
 func calculateAllHashes(allData fileDataSlice) (results fileDataSlice) {
 	ch := make(chan fileData)
 	for _, path := range allData {
@@ -68,6 +75,8 @@ func calculateAllHashes(allData fileDataSlice) (results fileDataSlice) {
 	return results
 }
 
+// calculates a hash (md5, sha1, etc) for a single file. The calling function
+// is responsible for providing the hash.Hash implementation that will be used.
 func genHash(hash hash.Hash, path string) string {
 	file, err := os.Open(path)
 	if err != nil {
@@ -78,13 +87,14 @@ func genHash(hash hash.Hash, path string) string {
 	return fmt.Sprintf("%x", hash.Sum(nil))
 }
 
+// fill in the hash values on the provided fileData struct.
 func calculateHashes(info fileData) fileData {
 	info.md5 = genHash(md5.New(), info.path)
 	info.sha1 = genHash(sha1.New(), info.path)
 	return info
 }
 
-// it's alive!
+// application entry point
 func main() {
 	runtime.GOMAXPROCS(runtime.NumCPU())
 	flag.Parse()
