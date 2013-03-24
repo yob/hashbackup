@@ -26,3 +26,14 @@ func TestGenHashWithSha1(t *testing.T) {
 		t.Error("sha1 not correct")
 	}
 }
+
+func TestCalculateHashes(t *testing.T) {
+	fileData := fileData{path: sampleFile()}
+	result := calculateHashes(fileData)
+	if result.md5 == "" {
+		t.Error("md5 must be set")
+	}
+	if result.sha1 == "" {
+		t.Error("sha1 must be set")
+	}
+}
