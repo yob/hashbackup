@@ -54,6 +54,7 @@ func getPathsOfInterest(root string) (allData fileDataSlice, err error) {
 		return nil
 	}
 	err = filepath.Walk(root, scan)
+	sort.Sort(allData)
 	return
 }
 
