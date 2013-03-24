@@ -8,9 +8,42 @@ import (
 	"testing"
 )
 
-func sampleFile() string {
+func sampleDir() string {
 	_, filename, _, _ := runtime.Caller(0)
-	return path.Join(path.Dir(filename), "test_data","foo.txt")
+	return path.Join(path.Dir(filename), "test_data")
+}
+
+func sampleFile() string {
+	return path.Join(sampleDir(),"foo.txt")
+}
+
+func TestGetPathsOfInterest(t *testing.T) {
+	results, _ := getPathsOfInterest(sampleDir())
+	if len(results) != 1 {
+		t.Error("more than 1 item returned")
+	}
+	if results[0].path != sampleFile() {
+		t.Error("incorrect file path returned")
+	}
+	if results[0].bytes != 20 {
+		t.Error("incorrect file byte count returned")
+	}
+}
+
+func TestCalculateAllHashes(t *testing.T) {
+	input := fileDataSlice{}
+	data := fileData{path: sampleFile()}
+	input = append(input, data)
+	results := calculateAllHashes(input)
+	if len(results) != 1 {
+		t.Error("more than 1 item returned")
+	}
+	if results[0].md5 == "" {
+		t.Error("md5 must be set")
+	}
+	if results[0].sha1 == "" {
+		t.Error("sha1 must be set")
+	}
 }
 
 func TestGenHashWithMd5(t *testing.T) {
