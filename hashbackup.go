@@ -14,7 +14,7 @@ import (
 	"sort"
 )
 
-// a convenient place to hold data on a signle file
+// a convenient place to hold data on a single file
 type fileData struct {
 	path  string
 	md5   string
